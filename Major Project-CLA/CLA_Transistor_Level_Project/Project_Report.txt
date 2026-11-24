@@ -1,0 +1,81 @@
+# Project Report
+## Design of a 4-bit Carry Look-Ahead Adder at Transistor Level
+
+### 1. Abstract
+This project presents the design and transient simulation of a 4-bit Carry Look-Ahead Adder (CLA) using static CMOS transistor-level logic. The circuit computes the sum of two 4-bit binary operands. The carry network uses generate and propagate signals and parallel look-ahead equations rather than waiting for a carry to ripple through every bit. The LTspice testbench applies all 256 possible input pairs with carry-in fixed at logic 0.
+
+### 2. Objectives
+- Design a 4-bit binary adder using carry look-ahead logic.
+- Implement the required logic gates using CMOS MOSFETs.
+- Obtain sum and carry outputs in LTspice transient analysis.
+- Verify the outputs for all combinations of the two 4-bit inputs.
+
+### 3. Theory
+For each bit position i:
+- Propagate: `Pi = Ai XOR Bi`
+- Generate: `Gi = Ai AND Bi`
+- Carry relation: `C(i+1) = Gi + Pi.Ci`
+- Sum: `Si = Pi XOR Ci`
+
+Carry-in is fixed to zero (`C0 = 0`) in this implementation. Therefore:
+- `C1 = G0`
+- `C2 = G1 + P1.G0`
+- `C3 = G2 + P2. G1 + P2.P1.G0`
+- `C4 = G3 + P3.G2 + P3.P2.G1 + P3.P2.P1.G0`
+
+The sum equations are:
+- `S0 = P0`
+- `S1 = P1 XOR C1`
+- `S2 = P2 XOR C2`
+- `S3 = P3 XOR C3`
+
+The 5-bit result is `C4 S3 S2 S1 S0`.
+
+### 4. Transistor-Level Implementation
+The netlist builds the following logic using MOSFET subcircuits:
+- CMOS inverter (`INV`)
+- CMOS NAND2, NAND3 and NAND4 gates
+- AND2 using NAND2 followed by an inverter
+- XOR2 using four NAND2 gates
+
+Each NAND gate uses parallel PMOS devices in the pull-up network and series NMOS devices in the pull-down network. The XOR function is constructed from four NAND gates. The carry equations are implemented with NAND gates and inverted generate terms, providing the look-ahead carry network.
+
+### 5. Simulation Setup
+- Simulator: LTspice
+- Supply voltage: 5 V
+- MOSFET models: generic Level-1 NMOS and PMOS
+- Analysis: transient
+- Simulation duration: 2.56 microseconds
+- Maximum time step: 0.2 nanoseconds
+- Inputs: A[3:0] and B[3:0], driven by pulse voltage sources
+- Carry-in: fixed at 0 V
+
+The pulse periods are arranged as a binary count sequence. A[3:0] cycles through its 16 values for each value of B[3:0], while B[3:0] changes more slowly. This produces all 256 operand pairs during one transient run.
+
+### 6. Expected Results and Verification
+For each input pair, the expected arithmetic result is:
+`Result = A + B`, with `0 <= A <= 15` and `0 <= B <= 15`.
+verified for one combination
+
+
+The low four bits appear at S3..S0 and the fifth bit appears at C4. For example:
+- A = 0011 (3), B = 0101 (5) gives C4S3S2S1S0 = 01000 (8).
+- A = 1111 (15), B = 0001 (1) gives C4S3S2S1S0 = 10000 (16).
+- A = 1111 (15), B = 1111 (15) gives C4S3S2S1S0 = 11110 (30).
+
+The accompanying CSV contains the expected result for every one of the 256 input combinations.
+
+### 7. Advantages of Carry Look-Ahead
+- Carry terms are formed using parallel generate/propagate logic.
+- The carry computation avoids a four-stage ripple dependency.
+- The design demonstrates the speed-oriented principle used in faster adder architectures.
+
+### 8. Limitations
+- The MOSFET models are generic educational models and are not tied to a particular semiconductor process.
+- The circuit is a 4-bit demonstration with carry-in fixed to zero.
+- Propagation delay and power results are model- and simulator-dependent.
+
+### 9. Conclusion
+A 4-bit carry look-ahead adder has been described and implemented as a transistor-level CMOS netlist. The circuit derives propagate and generate signals, forms carry outputs using look-ahead equations, and computes the four sum bits. The supplied LTspice testbench exercises all 256 possible operand pairs for carry-in zero. The truth-table CSV provides an independent reference for checking the transient simulation.
+The outputs provided are for 256 combinations , only one comination is verified
+
